@@ -7,9 +7,10 @@ def frames_of_video(source):
     file_count = 0
     # data_img = []
     # Создаем объект захвата видео, в этом случае мы читаем видео из файла
-    vid_capture = cv2.VideoCapture(source)
-    dirPath = f'E:/GitHub/camera-calibration-app/videos/calibrate/images{source[9:-4]}'
-    print(dirPath)
+    par = source[source.find('videos'):]
+    vid_capture = cv2.VideoCapture(f'{par}')
+    # dirPath = f'E:/GitHub/camera-calibration-app/videos/calibrate/images{source[9:-4]}'
+    dirPath = f'{source[:-4]}'
     if not os.path.isdir(dirPath):
         os.mkdir(dirPath)
     if not vid_capture.isOpened():
@@ -22,14 +23,14 @@ def frames_of_video(source):
             break
         if file_count % 24 == 0:
             frame = cv2.resize(frame, (960, 720))
-            cv2.imwrite(f'{dirPath}/{int(file_count/24)}.jpg', frame)
+            cv2.imwrite(f'{dirPath}/{int(file_count/24)}.jpeg', frame)
             # data_img.append(frame)
         file_count += 1
 
     # Освободить объект захвата видео
     vid_capture.release()
     cv2.destroyAllWindows()
-    return
+    return dirPath
     # for el in self.data_img:
     #     cv2.imshow('Look', el)
     #     cv2.waitKey(60)
