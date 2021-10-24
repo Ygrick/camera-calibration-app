@@ -1,11 +1,11 @@
 import numpy as np
-import cv2 as cv
+import cv2
 from FramesOfVideo import frames_of_video
 
 
 def camera_calibration(source):
     # termination criteria
-    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    # criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
     objp = np.zeros((6*7, 3), np.float32)
@@ -15,40 +15,49 @@ def camera_calibration(source):
     objpoints = [] # 3d point in real world space
     imgpoints = [] # 2d points in image plane.
 
+    # glob.glob("E:/GitHub/camera-calibration-app/videos/calibrate/images1_20211006-160404_1_167/*.jpg")
     images = frames_of_video(source)
 
-    for fname in images:
-        gray = cv.cvtColor(fname, cv.COLOR_BGR2GRAY)
+    for image in images:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         # Find the chess board corners
-        ret, corners = cv.findChessboardCorners(gray, (7, 6), None)
+        ret, corners = cv2.findChessboardCorners(gray, (7, 6), None)
 
         # If found, add object points, image points (after refining them)
         if ret:
             objpoints.append(objp)
-            # corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
             imgpoints.append(corners)
 
+            # возможность визуализации найденных углов шахматного паттерна
+            # corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
             # Draw and display the corners
-            # cv.drawChessboardCorners(fname, (7, 6), corners2, ret)
-            # cv.imshow('img', fname)
-            # cv.waitKey(50)
+            # cv2.drawChessboardCorners(image, (7, 6), corners2, ret)
+            # cv2.imshow('img', image)
+            # cv2.imwrite(_путь_, image)
+            # cv2.waitKey(50)
 
-    cv.destroyAllWindows()
     if imgpoints:
         print('hello')
-        ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-        img = cv.imread('videos/left14.jpg')
-        h,  w = img.shape[:2]
-        new_camera_mtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
-
-        # undistort
-        dst = cv.undistort(img, mtx, dist, None, new_camera_mtx)
-
-        # crop the image
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+        vid_capture = cv2.VideoCapture(source)
+        if not vid_capture.isOpened():
+            return
+        width, height = 960, 720
+        fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
+        writer = cv2.VideoWriter(f'videos/calibrate/{source[7:]}', fourcc, 20, (width, height))
+        new_camera_mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (width, height), 1, (width, height))
         x, y, w, h = roi
-        dst = dst[y:y+h, x:x+w]
-        cv.imwrite('videos/calibresult2.png', dst)
+        while 1:
+            ret, frame = vid_capture.read()
+            if not ret:
+                break
+            # undistort
+            frame = cv2.resize(frame, (960, 720))
+            frame = cv2.undistort(frame, mtx, dist, None, new_camera_mtx)
+            writer.write(frame)
+
+    cv2.destroyAllWindows()
 
 
 camera_calibration('videos/+-1_20211006-160404_1_167.avi')
