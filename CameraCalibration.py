@@ -6,7 +6,11 @@ from PyQt5.QtCore import QThread
 
 
 class ThreadProcessCalibration(QThread):
-    def camera_calibration(self, source_path, source=[], video=True, show_chess=False):
+    source_path = ''
+    source = []
+    video = True
+    show_chess = False
+    def run(self):
         # termination criteria
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -18,16 +22,17 @@ class ThreadProcessCalibration(QThread):
         objpoints = [] # 3d point in real world space
         imgpoints = [] # 2d points in image plane.
 
-        if video:
-            print('source_video')
-            source_path = source_path[source_path.find('videos'):]
+        if self.video:
+            print('video calibration mode selected')
+            source_path = self.source_path[self.source_path.find('videos'):]
             images = glob.iglob(f'{source_path}/*')
             # print(f'videos/calibrate/{source_path[7:]}.avi')
             # print(f'{source_path[:]}.avi')
         else:
-            print('source_files')
+            print('image calibration mode selected')
             thread_get_frames = ThreadProcessFrames()
-            images = thread_get_frames.frames_of_video(source)
+            thread_get_frames.dir_path = self.source_path
+            images = thread_get_frames.run()
         # glob.glob("E:/GitHub/camera-calibration-app/videos/calibrate/images1_20211006-160404_1_167/*.jpg")
 
         for frame in images:
@@ -41,7 +46,7 @@ class ThreadProcessCalibration(QThread):
             if ret:
                 objpoints.append(objp)
                 imgpoints.append(corners)
-                if show_chess:
+                if self.show_chess:
                     # возможность визуализации найденных углов шахматного паттерна
                     corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
                     # Draw and display the corners
@@ -49,9 +54,9 @@ class ThreadProcessCalibration(QThread):
                     cv2.imshow('img', image)
                     # cv2.imwrite(_путь_, image)
                     cv2.waitKey(50)
-
+        print('end add img and obj points')
         if imgpoints:
-            print('hello')
+            print('start calibration video')
             ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
             vid_capture = cv2.VideoCapture(f'{source_path}.avi')
             if not vid_capture.isOpened():
@@ -69,6 +74,6 @@ class ThreadProcessCalibration(QThread):
                 frame = cv2.resize(frame, (960, 720))
                 frame = cv2.undistort(frame, mtx, dist, None, new_camera_mtx)
                 writer.write(frame)
-            print('hello_end')
+            print(f'end calibration video, check path: videos/calibrate/{source_path[7:]}.avi')
             vid_capture.release()
         cv2.destroyAllWindows()

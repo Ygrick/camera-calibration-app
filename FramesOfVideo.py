@@ -5,18 +5,26 @@ from PyQt5.QtCore import QThread
 
 
 class ThreadProcessFrames(QThread):
-    def frames_of_video(self, source):
+    # путь до папки с кадрами из видео
+    dir_path = ''
+
+    # путь до видео
+    source = ''
+
+    def run(self):
         file_count = 0
-        # data_img = []
         # Создаем объект захвата видео, в этом случае мы читаем видео из файла
-        par = source[source.find('videos'):]
+        par = self.source[self.source.find('videos'):]
         vid_capture = cv2.VideoCapture(f'{par}')
-        # dirPath = f'E:/GitHub/camera-calibration-app/videos/calibrate/images{source[9:-4]}'
-        dirPath = f'{source[:-4]}'
-        if not os.path.isdir(dirPath):
-            os.mkdir(dirPath)
         if not vid_capture.isOpened():
             return
+
+        # создаем путь до ккадров
+        self.dir_path = f'{self.source[:-4]}'
+        if not os.path.isdir(self.dir_path):
+            os.mkdir(self.dir_path)
+
+        print('start get frames of video')
         while 1:
             # Метод vid_capture.read() возвращают кортеж,
             # первым элементом является логическое значение, а вторым - кадр
@@ -25,14 +33,13 @@ class ThreadProcessFrames(QThread):
                 break
             if file_count % 24 == 0:
                 frame = cv2.resize(frame, (960, 720))
-                cv2.imwrite(f'{dirPath}/{int(file_count/24)}.jpeg', frame)
+                cv2.imwrite(f'{self.dir_path}/{int(file_count/24)}.jpeg', frame)
                 # data_img.append(frame)
             file_count += 1
-        print('end')
+        print('end get frames of video')
         # Освободить объект захвата видео
         vid_capture.release()
         cv2.destroyAllWindows()
-        return dirPath
         # for el in self.data_img:
         #     cv2.imshow('Look', el)
         #     cv2.waitKey(60)
