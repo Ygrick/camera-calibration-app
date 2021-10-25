@@ -1,37 +1,56 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication, QLabel, QScrollArea, QVBoxLayout, QWidget, QMainWindow
-from PyQt5.QtGui import QPixmap
+import multiprocessing
+import time
 
 
-class Example(QtWidgets.QMainWindow):
-    def __init__(self):
-        QMainWindow.__init__(self)
-        self.initUI()
-
-    def initUI(self):
-        self.setGeometry(300, 300, 400, 600)
-        self.setWindowTitle('ScrollArea')
-
-        self.pxm = QPixmap("fregat-big.png")
-        scr = QScrollArea(self)
-        pnl = QWidget(self)
-
-        vbox = QVBoxLayout(self)
-        for _ in range(5):
-            lbl = QLabel()
-            lbl.setPixmap(self.pxm)
-            vbox.addWidget(lbl)
-
-        pnl.setLayout(vbox)
-        scr.setWidget(pnl)
-        self.setCentralWidget(scr)
-        self.show()
+def heavy(n, i, proc):
+    for x in range(1, n):
+        for y in range(1, n):
+            x ** y
+    print(f"Цикл № {i} ядро {proc}")
 
 
-if __name__ == '__main__':
-    app = QtWidgets.QApplication([])
+def sequential(calc, proc):
+    print(f"Запускаем поток № {proc}")
+    for i in range(calc):
+        heavy(500, i, proc)
+    print(f"{calc} циклов вычислений закончены. Процессор № {proc}")
 
-    mw = Example()
-    mw.show()
 
-    app.exec()
+def processesed(procs, calc):
+    # procs - количество ядер
+    # calc - количество операций на ядро
+
+    processes = []
+
+    # делим вычисления на количество ядер
+    for proc in range(procs):
+        p = multiprocessing.Process(target=sequential, args=(calc, proc))
+        processes.append(p)
+        p.start()
+
+    # Ждем, пока все ядра 
+    # завершат свою работу.
+    for p in processes:
+        p.join()
+
+
+if __name__ == "__main__":
+    start = time.time()
+    # узнаем количество ядер у процессора
+    n_proc = multiprocessing.cpu_count()
+    # вычисляем сколько циклов вычислений будет приходится
+    # на 1 ядро, что бы в сумме получилось 80 или чуть больше
+    calc = 80 // n_proc + 1
+    processesed(n_proc, calc)
+    end = time.time()
+    print(f"Всего {n_proc} ядер в процессоре")
+    print(f"На каждом ядре произведено {calc} циклов вычислений")
+    print(f"Итого {n_proc * calc} циклов за: ", end - start)
+
+# Весь вывод показывать не будем
+# ...
+# ...
+# ...
+# Всего 6 ядер в процессоре
+# На каждом ядре произведено 14 циклов вычислений
+# Итого 84 циклов вычислений за:  5.0251686573028564

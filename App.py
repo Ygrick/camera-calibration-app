@@ -1,12 +1,5 @@
-import os
-import sys
-import numpy as np
-import cv2
-import PyQt5
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtWidgets import QLabel, QVBoxLayout, QPushButton, QWidget, QFileDialog, QGridLayout, QFrame
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtWidgets import QWidget, QFileDialog, QGridLayout, QFrame
 from videoWidget import Widget
 
 # отсюда брал
