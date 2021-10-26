@@ -1,11 +1,17 @@
 import numpy as np
 import cv2
-from cv2 import imread, cvtColor, COLOR_BGR2GRAY, findChessboardCorners, VideoCapture, undistort, resize
-from FramesOfVideo import ThreadProcessFrames
+from cv2 import imread, cvtColor, COLOR_BGR2GRAY, findChessboardCorners, VideoCapture, undistort, resize, cornerSubPix
 import glob
 import json
+from json import JSONEncoder
 from PyQt5.QtCore import QThread
+from numpyencoder import NumpyEncoder
 
+class NumpyArrayEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return JSONEncoder.default(self, obj)
 
 class ThreadProcessCalibration(QThread):
     source_path = ''
@@ -47,35 +53,35 @@ class ThreadProcessCalibration(QThread):
             if ret:
                 objpoints.append(objp)
                 imgpoints.append(corners)
-                # if self.show_chess:
-                #     # возможность визуализации найденных углов шахматного паттерна
-                #     corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
-                #     # Draw and display the corners
-                #     cv2.drawChessboardCorners(image, (7, 6), corners2, ret)
-                #     cv2.imshow('img', image)
-                #     # cv2.imwrite(_путь_, image)
-                #     cv2.waitKey(50)
+                if self.show_chess:
+                    # возможность визуализации найденных углов шахматного паттерна
+                    corners2 = cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
+                    # Draw and display the corners
+                    cv2.drawChessboardCorners(image, (7, 6), corners2, ret)
+                    cv2.imshow('img', image)
+                    # cv2.imwrite(_путь_, image)
+                    cv2.waitKey(50)
                 print('.', end='')
         print('end add img and obj points')
         if imgpoints:
             print('start calibration video')
             ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-            # data = {'mtx': mtx,
-            #         'dist': dist,
-            #         'rvecs': rvecs,
-            #         'tvecs': tvecs}
-            #
-            # with open('data.json', 'w') as outfile:
-            #     json.dump(data, outfile)
+            data = {'path': f'{source_path[7:]}.avi',
+                    'mtx': mtx,
+                    'dist': dist,
+                    'rvecs': rvecs,
+                    'tvecs': tvecs}
 
-            print(f'{source_path}.avi')
+            with open('data.json', 'w') as outfile:
+                json.dump(data, outfile, indent=4, cls=NumpyEncoder)
+
+            print(f'читаем видео из: {source_path}.avi')
             vid_capture = VideoCapture(f'{source_path}.avi')
 
             if not vid_capture.isOpened():
                 return
             width, height = 960, 720
             fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
-            print(f'videos/calibrate/{source_path[7:]}.avi')
             writer = cv2.VideoWriter(f'videos/calibrate/{source_path[7:]}.avi', fourcc, 20, (width, height))
             new_camera_mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (width, height), 1, (width, height))
             x, y, w, h = roi

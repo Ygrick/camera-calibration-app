@@ -43,9 +43,6 @@ class ThreadProcessFrames(QThread):
         # Освободить объект захвата видео
         vid_capture.release()
         cv2.destroyAllWindows()
-        # self.widget.btn_choice_frames.show()
-        # self.widget.btn_start.show()
-        # self.widget.check_box.show()
         # for el in self.data_img:
         #     cv2.imshow('Look', el)
         #     cv2.waitKey(60)

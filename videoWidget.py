@@ -48,6 +48,7 @@ class Widget(QWidget):
 
         # блкирование кнопок
         self.block_btn()
+        self.btn_choice.setEnabled(True)
 
         # многопоточность приложения
         self.thread_process_get_frames = ThreadProcessFrames(self)
@@ -112,11 +113,12 @@ class Widget(QWidget):
             self.thread_process_calibration.source = self.files
             self.thread_process_calibration.video = self.video_or_image
             self.thread_process_calibration.show_chess = self.show_chess
+
+        # запуск в отдельном потоке
         self.thread_process_calibration.finished.connect(self.on_finished)
         self.thread_process_calibration.start()
         # блкирование кнопок всех кнопок
         self.block_btn()
-
 
     def show_chessboard(self, state):
         self.show_chess = (state == Qt.Checked)
