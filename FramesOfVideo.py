@@ -23,6 +23,9 @@ class ThreadProcessFrames(QThread):
 
         # создаем путь до ккадров
         self.widget.dir_path = f'{self.source[:-4]}'
+        self.calibrate_path = self.source[:self.source.find('+-')] + 'calibrate'
+        if not os.path.isdir(self.calibrate_path):
+            os.mkdir(self.calibrate_path)
         if not os.path.isdir(self.widget.dir_path):
             os.mkdir(self.widget.dir_path)
 
